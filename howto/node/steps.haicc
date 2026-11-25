@@ -1,0 +1,22 @@
+# needs: docker
+# scene: the host in service, a swarm in it
+. boot/deploy host haiccing/base-component-haicc
+host crud/create swarms/swarm-1 '{"kind":"swarm"}'
+# step: the node, in the host, in service by its commission
+host boot/deploy swarms/swarm-1/node-1 haiccing/base-component-haicc
+# expect: "mrepo":"swarm-1/node-1"
+# step: its replica made and run in a container
+host haicc swarms/swarm-1/node-1 container/create
+# expect: "created"
+host haicc swarms/swarm-1/node-1 container/start
+# expect: "running"
+host haicc swarms/swarm-1/node-1 container/status
+# expect: "running"
+# step: the mrepo in the container, in service by its own commission as its container started, reached through the node
+host haicc swarms/swarm-1/node-1 haicc container crud/read .
+# expect: "uri":["main","."]
+# step: removed before the node is torn down: boot/teardown does not know of containers
+host haicc swarms/swarm-1/node-1 container/remove
+# expect: "removed"
+host boot/teardown swarms/swarm-1/node-1
+# expect: "tornDown":"swarms/swarm-1/node-1"
